@@ -1,15 +1,24 @@
+import logo from '../../assets/AIRH_logo.png';
+import { authService } from '../../services/authService';
+
 function Navbar() {
+    const handleGoogleLogin = () => {
+        authService.loginWithGoogle();
+    };
+
     return (
         <nav className="navbar">
             <div className="container">
+                {/* Logo à gauche */}
                 <div className="navbar-brand">
-                    <img src="/images/AIrh_logo.png" alt="AIrh Logo" className="logo-icon" />
+                    <img src={logo} alt="AIrh Logo" className="logo-icon" />
                 </div>
                 
-                <a href="/login" className="cta-button">
-                    <i className="fas fa-sign-in-alt"></i>
-                    Se connecter
-                </a>
+                {/* Bouton CTA à droite */}
+                <button onClick={handleGoogleLogin} className="cta-button">
+                    <i className="fab fa-google"></i>
+                    Se connecter avec Google
+                </button>
             </div>
         </nav>
     );

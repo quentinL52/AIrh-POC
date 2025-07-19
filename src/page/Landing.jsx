@@ -5,7 +5,7 @@ import Features from '../components/landing/Features';
 import Footer from '../components/landing/Footer';
 
 
-function App() {
+function Landing() {
   return (
     <div className="landing-container"> 
       <Navbar />
@@ -16,4 +16,4 @@ function App() {
   );
 }
 
-export default App;
+export default Landing;
