@@ -1,5 +1,3 @@
-import candidatImg from '../../assets/candidat.png';
-import recruteurImg from '../../assets/recruteur.png';
 
 function Features() {
   return (
