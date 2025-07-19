@@ -1,4 +1,4 @@
-import logo from '../../assets/AIRH_logo.png';
+import logo from '../../public/AIRH_logo.png';
 import { authService } from '../../services/authService';
 
 function Navbar() {
