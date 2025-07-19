@@ -10,7 +10,7 @@ function Navbar() {
             <div className="container">
                 {/* Logo à gauche */}
                 <div className="navbar-brand">
-                    <img src={logo} alt="AIrh Logo" className="logo-icon" />
+                    <img src="/AIRH_logo.png" alt="AIrh Logo" className="logo-icon" />
                 </div>
                 
                 {/* Bouton CTA à droite */}
