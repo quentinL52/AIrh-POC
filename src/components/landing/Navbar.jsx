@@ -1,5 +1,4 @@
 import { authService } from '../../services/authService';
-import logo from '../../assets/AIRH_logo.png';
 
 function Navbar() {
     const handleGoogleLogin = () => {
