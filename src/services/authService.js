@@ -1,17 +1,14 @@
-const API_BASE_URL = 'http://localhost:8000'; // Ajustez selon votre config
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
 
 export const authService = {
-  // Redirection vers Google OAuth
   loginWithGoogle: () => {
     window.location.href = `${API_BASE_URL}/auth/login/google`;
   },
 
-  // Vérifier si l'utilisateur est connecté via les cookies
   isAuthenticated: () => {
     return document.cookie.includes('session_token=');
   },
 
-  // Récupérer les infos utilisateur depuis le backend via les cookies
   getCurrentUser: async () => {
     try {
       const response = await fetch(`${API_BASE_URL}/auth/me`, {
