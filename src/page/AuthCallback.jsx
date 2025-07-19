@@ -1,30 +1,31 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { authService } from '../services/authService';
+import '../style/AuthCallback.css';
 
 const AuthCallback = () => {
   const navigate = useNavigate();
+  const [status, setStatus] = useState('processing');
+  const [message, setMessage] = useState('Finalisation de votre connexion...');
 
   useEffect(() => {
     const handleAuthCallback = async () => {
       try {
-        const success = authService.handleAuthCallback();
+        const user = localStorage.getItem('user');
         
-        if (success) {
-          const user = await authService.getCurrentUser();
+        if (user) {
+          setStatus('success');
+          setMessage('Connexion réussie ! Redirection...');
           
-          if (user) {
-            setTimeout(() => {
-              navigate('/home');
-            }, 1000);
-          } else {
-            throw new Error('Impossible de récupérer les données utilisateur');
-          }
+          setTimeout(() => {
+            navigate('/home');
+          }, 1500);
         } else {
-          throw new Error('Token non trouvé dans l\'URL');
+          throw new Error('Aucune donnée utilisateur trouvée');
         }
       } catch (error) {
-        console.error('Erreur d\'authentification:', error);
+        console.error('Erreur dans AuthCallback:', error);
+        setStatus('error');
+        setMessage('Erreur lors de la connexion');
         
         setTimeout(() => {
           navigate('/?error=auth_failed');
@@ -32,56 +33,45 @@ const AuthCallback = () => {
       }
     };
 
-    handleAuthCallback();
+    setTimeout(handleAuthCallback, 500);
   }, [navigate]);
 
+  const getIcon = () => {
+    switch (status) {
+      case 'success':
+        return <i className="fas fa-check-circle"></i>;
+      case 'error':
+        return <i className="fas fa-times-circle"></i>;
+      default:
+        return <i className="fas fa-spinner fa-spin"></i>;
+    }
+  };
+
   return (
-    <div style={{ 
-      display: 'flex', 
-      flexDirection: 'column',
-      justifyContent: 'center', 
-      alignItems: 'center', 
-      height: '100vh',
-      backgroundColor: '#f8fafc'
-    }}>
-      <div style={{
-        padding: '3rem',
-        background: 'white',
-        borderRadius: '0.75rem',
-        boxShadow: '0 10px 25px rgba(0, 0, 0, 0.1)',
-        textAlign: 'center',
-        maxWidth: '400px'
-      }}>
-        <div style={{
-          width: '60px',
-          height: '60px',
-          background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
-          borderRadius: '50%',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          margin: '0 auto 1.5rem',
-          color: 'white',
-          fontSize: '1.5rem'
-        }}>
-          <i className="fas fa-spinner fa-spin"></i>
+    <div className="auth-callback-container">
+      <div className="auth-callback-card">
+        <div className={`auth-callback-icon ${status}`}>
+          {getIcon()}
         </div>
         
-        <h2 style={{
-          fontSize: '1.5rem',
-          fontWeight: '600',
-          color: '#111827',
-          marginBottom: '0.5rem'
-        }}>
-          Connexion en cours...
+        <h2 className="auth-callback-title">
+          {status === 'success' ? 'Connexion réussie !' : 
+           status === 'error' ? 'Erreur de connexion' : 
+           'Connexion en cours...'}
         </h2>
         
-        <p style={{
-          color: '#6b7280',
-          fontSize: '0.875rem'
-        }}>
-          Nous finalisons votre authentification
+        <p className="auth-callback-message">
+          {message}
         </p>
+
+        {status === 'error' && (
+          <button
+            className="auth-callback-button"
+            onClick={() => navigate('/')}
+          >
+            Retour à l'accueil
+          </button>
+        )}
       </div>
     </div>
   );

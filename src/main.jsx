@@ -5,10 +5,14 @@ import Landing from './page/Landing.jsx';
 import HomePage from './page/HomePage.jsx';
 import AuthCallback from './page/AuthCallback.jsx';
 import ProtectedRoute from './components/ProtectedRoute.jsx';
+import { authService } from './services/authService';
 import './style/Landing.css';
 import './style/HomePage.css';
 import './components/Layout.css';
 import '@fortawesome/fontawesome-free/css/all.min.css';
+
+// Initialiser Google Auth au démarrage de l'application
+authService.initialize();
 
 function App() {
   return (
@@ -24,7 +28,6 @@ function App() {
             </ProtectedRoute>
           } 
         />
-        <Route path="/login" element={<div>Page de connexion (à implémenter)</div>} />
       </Routes>
     </Router>
   );
