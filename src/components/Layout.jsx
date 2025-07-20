@@ -1,7 +1,10 @@
 import React, { useState } from 'react';
+import { authService } from '../services/authService';
 import './Layout.css';
 
 const Layout = ({ children, activeSection, onSectionChange }) => {
+    const [showUserMenu, setShowUserMenu] = useState(false);
+    
     const user = {
         name: 'Quentin Loumeau',
         email: 'loumeau.quentin@email.com',
@@ -40,6 +43,16 @@ const Layout = ({ children, activeSection, onSectionChange }) => {
             ]
         }
     ];
+
+    const handleLogout = async () => {
+        try {
+            await authService.logout();
+        } catch (error) {
+            console.error('Erreur lors de la déconnexion:', error);
+            // Forcer la redirection même en cas d'erreur
+            window.location.href = '/';
+        }
+    };
 
     return (
         <div className="app-layout">
@@ -80,9 +93,51 @@ const Layout = ({ children, activeSection, onSectionChange }) => {
                             <div className="user-name">loumeau.quen...</div>
                             <div className="user-email">loumeau.quentin...</div>
                         </div>
-                        <button className="user-menu-btn">
-                            <i className="fas fa-ellipsis-v"></i>
-                        </button>
+                        <div style={{ position: 'relative' }}>
+                            <button 
+                                className="user-menu-btn"
+                                onClick={() => setShowUserMenu(!showUserMenu)}
+                            >
+                                <i className="fas fa-ellipsis-v"></i>
+                            </button>
+                            
+                            {/* Menu déroulant */}
+                            {showUserMenu && (
+                                <div style={{
+                                    position: 'absolute',
+                                    bottom: '100%',
+                                    right: 0,
+                                    backgroundColor: 'white',
+                                    border: '1px solid #e5e7eb',
+                                    borderRadius: '0.5rem',
+                                    boxShadow: '0 10px 25px rgba(0, 0, 0, 0.1)',
+                                    minWidth: '150px',
+                                    zIndex: 1000,
+                                    marginBottom: '0.5rem'
+                                }}>
+                                    <button
+                                        onClick={handleLogout}
+                                        style={{
+                                            width: '100%',
+                                            padding: '0.75rem 1rem',
+                                            border: 'none',
+                                            background: 'none',
+                                            textAlign: 'left',
+                                            cursor: 'pointer',
+                                            color: '#374151',
+                                            fontSize: '0.875rem',
+                                            borderRadius: '0.5rem',
+                                            transition: 'background-color 0.2s'
+                                        }}
+                                        onMouseOver={(e) => e.target.style.backgroundColor = '#f3f4f6'}
+                                        onMouseOut={(e) => e.target.style.backgroundColor = 'transparent'}
+                                    >
+                                        <i className="fas fa-sign-out-alt" style={{ marginRight: '0.5rem' }}></i>
+                                        Se déconnecter
+                                    </button>
+                                </div>
+                            )}
+                        </div>
                     </div>
                 </div>
             </div>
@@ -93,6 +148,21 @@ const Layout = ({ children, activeSection, onSectionChange }) => {
                     {children}
                 </div>
             </div>
+            
+            {/* Fermer le menu si on clique ailleurs */}
+            {showUserMenu && (
+                <div 
+                    style={{
+                        position: 'fixed',
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        zIndex: 999
+                    }}
+                    onClick={() => setShowUserMenu(false)}
+                />
+            )}
         </div>
     );
 };
