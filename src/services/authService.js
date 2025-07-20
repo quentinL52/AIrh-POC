@@ -1,19 +1,37 @@
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+// src/services/authService.js
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1';
 
 export const authService = {
-  // Connexion avec Google via OAuth (redirection)
+  // Initialisation (pas besoin de Google SDK côté client)
+  initialize: async () => {
+    console.log('Auth service initialisé');
+  },
+
+  // Connexion avec Google - Redirige vers le backend
   loginWithGoogle: () => {
-    // Rediriger directement vers l'endpoint OAuth de votre backend
-    const oauthUrl = `${API_BASE_URL}/api/v1/auth/oauth/google`;
-    console.log('🔄 Redirection vers:', oauthUrl);
-    window.location.href = oauthUrl;
+    const authUrl = `${API_BASE_URL}/auth/oauth/google`;
+    console.log('🔄 Redirection vers:', authUrl);
+    window.location.href = authUrl;
+  },
+
+  // Inscription avec Google - Même processus (sera géré par le backend)
+  signupWithGoogle: () => {
+    const authUrl = `${API_BASE_URL}/auth/oauth/google`;
+    console.log('🔄 Redirection vers:', authUrl);
+    window.location.href = authUrl;
+  },
+
+  // Méthode unifiée pour connexion/inscription automatique
+  authenticateWithGoogle: () => {
+    const authUrl = `${API_BASE_URL}/auth/oauth/google`;
+    console.log('🔄 Redirection vers:', authUrl);
+    window.location.href = authUrl;
   },
 
   // Vérifier si l'utilisateur est connecté
   isAuthenticated: () => {
     const user = localStorage.getItem('user');
-    const token = localStorage.getItem('token');
-    return !!(user && token);
+    return !!user;
   },
 
   // Récupérer les informations de l'utilisateur actuel
@@ -30,71 +48,25 @@ export const authService = {
     }
   },
 
-  // Récupérer le token
-  getToken: () => {
-    return localStorage.getItem('token');
+  logout: () => {
+    localStorage.removeItem('user');
+    window.location.href = '/';
   },
 
-  // Déconnexion
-  logout: async () => {
-    try {
-      // Optionnel : appeler l'endpoint de déconnexion du backend
-      const token = authService.getToken();
-      if (token) {
-        await fetch(`${API_BASE_URL}/api/v1/auth/logout`, {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-        });
-      }
-    } catch (error) {
-      console.warn('Erreur lors de la déconnexion côté serveur:', error);
-    } finally {
-      // Nettoyer le localStorage dans tous les cas
-      localStorage.removeItem('user');
-      localStorage.removeItem('token');
-      window.location.href = '/';
-    }
-  },
-
-  // Faire des requêtes authentifiées
-  makeAuthenticatedRequest: async (url, options = {}) => {
-    const token = authService.getToken();
+  handleAuthCallback: (urlParams) => {
+    const token = urlParams.get('token');
+    const userData = urlParams.get('user');
     
-    if (!token) {
-      throw new Error('Utilisateur non authentifié');
+    if (token && userData) {
+      try {
+        const user = JSON.parse(decodeURIComponent(userData));
+        localStorage.setItem('user', JSON.stringify(user));
+        return true;
+      } catch (error) {
+        console.error('Erreur parsing user data:', error);
+        return false;
+      }
     }
-
-    const defaultHeaders = {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}`,
-    };
-
-    const config = {
-      ...options,
-      headers: {
-        ...defaultHeaders,
-        ...options.headers,
-      },
-    };
-
-    const response = await fetch(url, config);
-
-    // Si le token a expiré, rediriger vers la page de connexion
-    if (response.status === 401) {
-      authService.logout();
-      return null;
-    }
-
-    return response;
-  },
-
-  // Méthode pour gérer le callback (pour compatibilité)
-  handleAuthCallback: () => {
-    const user = localStorage.getItem('user');
-    const token = localStorage.getItem('token');
-    return !!(user && token);
+    return false;
   }
 };
