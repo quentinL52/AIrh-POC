@@ -1,140 +1,24 @@
-import { initializeGoogleAuth, signInWithGoogle } from './googleAuth';
-
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
 
 export const authService = {
-  // Initialiser Google Auth au démarrage de l'app
-  initialize: async () => {
-    try {
-      await initializeGoogleAuth();
-      console.log('Google Auth initialisé avec succès');
-    } catch (error) {
-      console.error('Erreur initialisation Google Auth:', error);
-    }
-  },
-
-  // Connexion avec Google (utilisateur existant)
-  loginWithGoogle: async () => {
-    try {
-      console.log('🔄 Début connexion Google...');
-      
-      // Récupérer les infos de Google
-      const { userInfo } = await signInWithGoogle();
-      console.log('✅ Infos Google récupérées:', userInfo);
-      
-      // Préparer les données pour votre API
-      const userData = {
-        google_id: userInfo.sub,
-        email: userInfo.email,
-        name: userInfo.name,
-        picture_url: userInfo.picture
-      };
-      
-      console.log('📤 Envoi vers /auth/login:', userData);
-      
-      // Appeler votre route POST /auth/login
-      const response = await fetch(`${API_BASE_URL}/auth/login`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify(userData)
-      });
-
-      console.log('📥 Réponse API login:', response.status);
-
-      if (response.ok) {
-        const user = await response.json();
-        console.log('✅ Connexion réussie:', user);
-        
-        // Stocker les infos utilisateur
-        localStorage.setItem('user', JSON.stringify(user));
-        
-        // Rediriger vers /home
-        window.location.href = '/home';
-        return user;
-      } else if (response.status === 404) {
-        // Utilisateur non trouvé
-        console.log('❌ Utilisateur non trouvé (404)');
-        throw new Error('USER_NOT_FOUND');
-      } else {
-        const errorData = await response.json();
-        console.error('❌ Erreur API login:', errorData);
-        throw new Error('Erreur de connexion');
-      }
-    } catch (error) {
-      console.error('❌ Erreur dans loginWithGoogle:', error);
-      throw error;
-    }
-  },
-
-  // Inscription avec Google (nouvel utilisateur)
-  signupWithGoogle: async () => {
-    try {
-      console.log('🔄 Début inscription Google...');
-      
-      // Récupérer les infos de Google
-      const { userInfo } = await signInWithGoogle();
-      console.log('✅ Infos Google récupérées:', userInfo);
-      
-      // Préparer les données pour votre API
-      const userData = {
-        google_id: userInfo.sub,
-        email: userInfo.email,
-        name: userInfo.name,
-        picture_url: userInfo.picture
-      };
-      
-      console.log('📤 Envoi vers /auth/register:', userData);
-      
-      // Appeler votre route POST /auth/register
-      const response = await fetch(`${API_BASE_URL}/auth/register`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify(userData)
-      });
-
-      console.log('📥 Réponse API register:', response.status);
-
-      if (response.status === 201) { // 201 Created
-        const user = await response.json();
-        console.log('✅ Inscription réussie:', user);
-        
-        // Stocker les infos utilisateur
-        localStorage.setItem('user', JSON.stringify(user));
-        
-        // Rediriger vers /home
-        window.location.href = '/home';
-        return user;
-      } else if (response.status === 409) {
-        // Utilisateur déjà existant
-        console.log('❌ Utilisateur déjà existant (409)');
-        throw new Error('USER_ALREADY_EXISTS');
-      } else {
-        const errorData = await response.json();
-        console.error('❌ Erreur API register:', errorData);
-        throw new Error('Erreur d\'inscription');
-      }
-    } catch (error) {
-      console.error('❌ Erreur dans signupWithGoogle:', error);
-      throw error;
-    }
+  // Connexion avec Google via OAuth (redirection)
+  loginWithGoogle: () => {
+    // Rediriger directement vers l'endpoint OAuth de votre backend
+    const oauthUrl = `${API_BASE_URL}/api/v1/auth/oauth/google`;
+    console.log('🔄 Redirection vers:', oauthUrl);
+    window.location.href = oauthUrl;
   },
 
   // Vérifier si l'utilisateur est connecté
   isAuthenticated: () => {
     const user = localStorage.getItem('user');
-    return !!user;
+    const token = localStorage.getItem('token');
+    return !!(user && token);
   },
 
   // Récupérer les informations de l'utilisateur actuel
   getCurrentUser: async () => {
     try {
-      // Récupérer depuis le localStorage
       const localUser = localStorage.getItem('user');
       if (localUser) {
         return JSON.parse(localUser);
@@ -146,41 +30,71 @@ export const authService = {
     }
   },
 
-  // Déconnexion
-  logout: () => {
-    localStorage.removeItem('user');
-    window.location.href = '/';
+  // Récupérer le token
+  getToken: () => {
+    return localStorage.getItem('token');
   },
 
-  // Gestion automatique login/signup avec fallback
-  authenticateWithGoogle: async () => {
+  // Déconnexion
+  logout: async () => {
     try {
-      console.log('🔄 Tentative de connexion automatique...');
-      // Essayer d'abord la connexion
-      return await authService.loginWithGoogle();
-    } catch (error) {
-      if (error.message === 'USER_NOT_FOUND') {
-        console.log('🔄 Utilisateur non trouvé, tentative d\'inscription...');
-        // Si l'utilisateur n'existe pas, essayer l'inscription
-        try {
-          return await authService.signupWithGoogle();
-        } catch (signupError) {
-          if (signupError.message === 'USER_ALREADY_EXISTS') {
-            console.log('🔄 Conflit timing, nouvelle tentative de connexion...');
-            // Conflit de timing, essayer à nouveau la connexion
-            return await authService.loginWithGoogle();
-          }
-          throw signupError;
-        }
+      // Optionnel : appeler l'endpoint de déconnexion du backend
+      const token = authService.getToken();
+      if (token) {
+        await fetch(`${API_BASE_URL}/api/v1/auth/logout`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        });
       }
-      throw error;
+    } catch (error) {
+      console.warn('Erreur lors de la déconnexion côté serveur:', error);
+    } finally {
+      // Nettoyer le localStorage dans tous les cas
+      localStorage.removeItem('user');
+      localStorage.removeItem('token');
+      window.location.href = '/';
     }
   },
 
-  // Méthode pour gérer le callback (compatible avec votre structure existante)
+  // Faire des requêtes authentifiées
+  makeAuthenticatedRequest: async (url, options = {}) => {
+    const token = authService.getToken();
+    
+    if (!token) {
+      throw new Error('Utilisateur non authentifié');
+    }
+
+    const defaultHeaders = {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`,
+    };
+
+    const config = {
+      ...options,
+      headers: {
+        ...defaultHeaders,
+        ...options.headers,
+      },
+    };
+
+    const response = await fetch(url, config);
+
+    // Si le token a expiré, rediriger vers la page de connexion
+    if (response.status === 401) {
+      authService.logout();
+      return null;
+    }
+
+    return response;
+  },
+
+  // Méthode pour gérer le callback (pour compatibilité)
   handleAuthCallback: () => {
-    // Dans votre architecture côté client, on vérifie juste si un utilisateur est connecté
     const user = localStorage.getItem('user');
-    return !!user;
+    const token = localStorage.getItem('token');
+    return !!(user && token);
   }
 };

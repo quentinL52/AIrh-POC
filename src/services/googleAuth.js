@@ -35,26 +35,19 @@ const handleCredentialResponse = (response) => {
   console.log('Credential response:', response);
 };
 
-// Fonction pour déclencher la popup Google
-export const signInWithGoogle = (isSignup = false) => {
+export const signInWithGoogle = () => { // On enlève le paramètre isSignup
   return new Promise((resolve, reject) => {
-    // Remplacer temporairement le callback
     const originalCallback = window.google.accounts.id.callback;
     
     window.google.accounts.id.callback = (response) => {
-      // Restaurer le callback original
       window.google.accounts.id.callback = originalCallback;
       
-      try {
-        // Décoder le JWT token de Google
-        const userInfo = parseJwt(response.credential);
-        resolve({ userInfo, isSignup });
-      } catch (error) {
-        reject(error);
+      if (response.credential) {
+        resolve(response); 
+      } else {
+        reject(new Error("La réponse de Google ne contient pas de credential."));
       }
     };
-
-    // Déclencher la popup Google
     window.google.accounts.id.prompt((notification) => {
       if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
         // Fallback : utiliser la méthode alternative
