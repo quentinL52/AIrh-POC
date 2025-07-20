@@ -1,8 +1,15 @@
 import { authService } from '../../services/authService';
 
 function Navbar() {
-    const handleGoogleLogin = () => {
-        authService.loginWithGoogle();
+    const [showAuthPopup, setShowAuthPopup] = useState(false);
+    const handleAuthButtonClick = () => {
+        setShowAuthPopup(true);
+    };
+    const handleClosePopup = () => {
+        setShowAuthPopup(false);
+    };
+    const handleGoogleAuth = () => {
+        authService.authenticateWithGoogle();
     };
 
     return (
@@ -15,11 +22,17 @@ function Navbar() {
                 
                 {/* Bouton CTA à droite */}
                 <button onClick={handleGoogleLogin} className="cta-button">
-                    <i className="fab fa-google"></i>
-                    Se connecter avec Google
+                    Se connecter / s'inscrire
                 </button>
             </div>
         </nav>
+            <AuthPopup 
+                isOpen={showAuthPopup}
+                onClose={handleClosePopup}
+                onGoogleLogin={handleGoogleAuth}  // Même fonction
+                onGoogleSignup={handleGoogleAuth} // Même fonction
+            />
+        </>
     );
 }
 
